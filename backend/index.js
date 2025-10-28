@@ -55,10 +55,7 @@ app.get("*", (req, res) => {
 const watchPath = path.join(__dirname, process.env.LISTEN_FOLDER);
 initializeWatcher(io, watchPath);
 
-(async () => {
+server.listen(port, async () => {
   const localIP = await getLocalIPv4();
-
-  server.listen(port, localIP, () => {
-    console.log(`App listening at: http://${localIP}:${port}`);
-  });
-})();
+  console.log(`App listening at: http://${localIP}:${port}`);
+});
