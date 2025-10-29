@@ -287,12 +287,28 @@ module.exports.checkAuth = async (req, res) => {
 
 exports.getUserSessions = async (req, res) => {
   try {
-    const userId = req.userId._id;
-    const sessions = await sessionModal.find({ userId });
-    res.status(200).json({ success: true, sessions: sessions });
+    const userId = req.userId;
+    const currentSessionId = req.sessionId; // Extracted from your JWT via middleware
+
+    // Find all sessions for this user
+    const sessions = await sessionModal.find({ user: userId }).lean();
+
+    // Mark the current session
+    const formattedSessions = sessions.map((session) => ({
+      ...session,
+      isCurrent: session.sessionId === currentSessionId,
+    }));
+
+    res.status(200).json({
+      success: true,
+      sessions: formattedSessions,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    console.error("Error fetching user sessions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching sessions.",
+    });
   }
 };
 
