@@ -1,31 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { formatDate } from '../utils/formatters';
-import { motion, AnimatePresence } from 'framer-motion';
-import ConfirmationModal from "../components/modals/ConfirmationModal"
+import { useEffect, useState } from "react";
+import { useAuthStore } from "../store/authStore";
+import { motion, AnimatePresence } from "framer-motion";
+import ConfirmationModal from "../components/modals/ConfirmationModal";
+import SessionCard from "../components/authcomp/SessionCard";
 
 const SessionsPage = () => {
-  const {
-    allSessions,
-    getSessions,
-    terminateSession,
-    user,
-  } = useAuthStore();
-  
+  const { allSessions, getSessions, terminateSession } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
 
   useEffect(() => {
     getSessions(); // Initial fetch
-
     const interval = setInterval(() => {
-      getSessions();
-    }, 1000); // Auto refresh every 1 second
-
-    return () => clearInterval(interval); // Cleanup
+      getSessions(); // Poll every 1 second
+    }, 1000);
+    return () => clearInterval(interval); // Cleanup on unmount
   }, [getSessions]);
 
-  const handleTerminate = (sessionId) => {
+  const handleTerminateClick = (sessionId) => {
     setSelectedSessionId(sessionId);
     setShowModal(true);
   };
@@ -47,41 +39,17 @@ const SessionsPage = () => {
           <AnimatePresence>
             {allSessions.map((session) => (
               <motion.li
-                key={session._id}
+                key={session.sessionId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
                 layout
-                className={`p-4 border rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
-                  session.isCurrent ? 'bg-gray-900 border-green-400' : 'bg-gray-900'
-                }`}
               >
-                <div className="space-y-1">
-                  <p className="font-semibold text-white text-lg">{session.device}</p>
-                  <p className="text-sm text-gray-600">OS: {session.os}</p>
-                  <p className="text-sm text-gray-600">Browser: {session.browser}</p>
-                  <p className="text-sm text-gray-600">IP: {session.ipAddress}</p>
-                  <p className="text-sm text-gray-500">
-                    Created: {formatDate(session.createdAt)}
-                  </p>
-                  {session.isCurrent && (
-                    <span className="text-xs text-green-600 font-semibold">
-                      (This device)
-                    </span>
-                  )}
-                </div>
-
-                {!session.isCurrent && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleTerminate(session.sessionId)}
-                    className="self-start sm:self-auto px-4 py-2 text-sm rounded bg-red-500 text-white hover:bg-red-600 transition"
-                  >
-                    Terminate
-                  </motion.button>
-                )}
+                <SessionCard
+                  session={session}
+                  onTerminate={handleTerminateClick}
+                />
               </motion.li>
             ))}
           </AnimatePresence>
@@ -99,3 +67,4 @@ const SessionsPage = () => {
 };
 
 export default SessionsPage;
+
